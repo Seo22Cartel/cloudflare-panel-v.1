@@ -1,0 +1,74 @@
+# CloudPanel .gitignore
+
+# Database
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Sensitive files
+credentials.txt
+config.local.php
+.env
+
+# Composer
+/vendor/
+composer.lock
+
+# Node modules
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Logs
+*.log
+logs/
+cache/*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# Backups
+backup/
+*.backup
+*.bak
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Archives (кроме необходимых)
+*.zip
+*.tar
+*.tar.gz
+*.rar
+!install.zip
+
+# Cache
+cache/*.list
+cache/*.json
+
+# Test files (если будут)
+phpunit.xml
+.phpunit.result.cache
+
+# Coverage reports
+coverage/
+clover.xml
+
+# Session files
+sessions/
+*.sess
+

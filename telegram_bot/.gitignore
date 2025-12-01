@@ -1,0 +1,9 @@
+# Конфигурация с секретами
+# config.php
+
+# Файлы состояния
+monitor_state.json
+
+# Логи
+*.log
+*.log.old

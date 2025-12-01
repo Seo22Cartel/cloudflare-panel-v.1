@@ -1,0 +1,40 @@
+name: PHP Lint
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+
+jobs:
+  php-lint:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        php-version: ['7.4', '8.0', '8.1', '8.2']
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        extensions: pdo, pdo_sqlite, curl, mbstring, xml
+        coverage: none
+    
+    - name: Validate composer.json
+      run: |
+        if [ -f composer.json ]; then
+          composer validate --strict
+        fi
+    
+    - name: Check PHP syntax
+      run: |
+        find . -name "*.php" -not -path "./vendor/*" -exec php -l {} \; | grep -v "No syntax errors"
+    
+    - name: Check for TODO/FIXME
+      run: |
+        ! grep -rn "TODO\|FIXME" --include="*.php" --exclude-dir=vendor . || true
+

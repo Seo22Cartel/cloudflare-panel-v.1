@@ -1,0 +1,154 @@
+# ===================================================
+# BOT AND AI CRAWLER PROTECTION (SOFT LEVEL)
+# More sophisticated bot blocking is done at PHP level after session auth
+# ===================================================
+
+# Block only the most obvious automated scraping tools at Apache level
+# This allows browsers through, and PHP will handle advanced bot detection
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Only block very obvious scraping tools
+    # These are CLI tools that would never be used by legitimate browsers
+    RewriteCond %{HTTP_USER_AGENT} ^(wget|curl/|python-requests|python-urllib|scrapy|httrack|libwww-perl)$ [NC]
+    RewriteRule ^(.*)$ - [F,L]
+    
+    # Block headless browser automation tools
+    RewriteCond %{HTTP_USER_AGENT} (HeadlessChrome|PhantomJS|Puppeteer|Playwright|Selenium) [NC]
+    RewriteRule ^(.*)$ - [F,L]
+</IfModule>
+
+# Block access via HTTP_REFERER from known bot sites
+<IfModule mod_rewrite.c>
+    RewriteCond %{HTTP_REFERER} (semrush|ahrefs|moz\.com|majestic|seokicks|serpstat|similarweb) [NC]
+    RewriteRule .* - [F,L]
+</IfModule>
+
+# Additional headers to discourage AI training
+<IfModule mod_headers.c>
+    # Opt-out from Google's AI training
+    Header set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate"
+    
+    # AI training opt-out
+    Header set X-Content-Type-Options-AI-Training "none"
+    Header set X-AI-Usage "opt-out"
+    
+    # Prevent content embedding
+    Header set X-Frame-Options "DENY"
+    
+    # Content Security Policy
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.jsdelivr.net cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' cdn.jsdelivr.net cdnjs.cloudflare.com fonts.googleapis.com; font-src 'self' cdnjs.cloudflare.com fonts.gstatic.com; img-src 'self' data:; frame-ancestors 'none';"
+    
+    # Referrer Policy - no information leak
+    Header set Referrer-Policy "no-referrer"
+    
+    # XSS Protection
+    Header set X-XSS-Protection "1; mode=block"
+    
+    # Prevent MIME sniffing
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>
+
+# ===================================================
+# FILE PROTECTION
+# ===================================================
+
+# Protect database files
+<Files "*.db">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# Protect SQLite files
+<FilesMatch "\.(sqlite|sqlite3|db3)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Protect sensitive PHP files from direct access
+<FilesMatch "^(config\.php|credentials\.txt|functions\.php|CloudflareApiClient\.php|.*_api\.php)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Allow specific API files for AJAX calls (only from same origin)
+<FilesMatch "^(bulk_api|cache_api|dns_api|security_api|security_rules_api|workers_api|queue_api|ns_queue_api|smart_waf_api|page_rules_api|logs_api|tokens_api|certificates_api|analytics_api)\.php$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Protect migration files
+<FilesMatch "^migrations/">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Protect worker templates from scraping
+<FilesMatch "\.js$">
+    <If "%{REQUEST_URI} =~ m#^/worker_templates/#">
+        Order Allow,Deny
+        Deny from all
+    </If>
+</FilesMatch>
+
+# Block .git folder
+<IfModule mod_rewrite.c>
+    RewriteRule ^\.git - [F,L]
+    RewriteRule ^\.github - [F,L]
+</IfModule>
+
+# ===================================================
+# DIRECTORY OPTIONS
+# ===================================================
+
+# Disable directory listing
+Options -Indexes
+
+# Disable server signature
+ServerSignature Off
+
+# ===================================================
+# FORCE HTTPS (Enable in production)
+# ===================================================
+
+# <IfModule mod_rewrite.c>
+#     RewriteEngine On
+#     RewriteCond %{HTTPS} off
+#     RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+# </IfModule>
+
+# ===================================================
+# CACHING
+# ===================================================
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
+
+# ===================================================
+# COMPRESSION
+# ===================================================
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json
+</IfModule>
+
+# ===================================================
+# RATE LIMITING (for mod_evasive if available)
+# ===================================================
+
+<IfModule mod_evasive20.c>
+    DOSHashTableSize 3097
+    DOSPageCount 5
+    DOSSiteCount 100
+    DOSPageInterval 1
+    DOSSiteInterval 1
+    DOSBlockingPeriod 300
+</IfModule>
